@@ -3,7 +3,7 @@ import shutil
 import random
 import string
 import numpy as np
-from perception import hashers
+
 import pandas as pd
 from PIL import Image, ImageFile
 from scipy.fftpack import dct
@@ -192,63 +192,92 @@ def is_bad_image(image_scores, real_threshold=0.9, aesthetic_threshold=0.35, mon
         max(imgscore, key=imgscore.get) in bad_imgscore_types or
         anime_real_score["real"] > real_threshold or
         aesthetic_score < aesthetic_threshold or
-        max(scores_by_class, key=scores_by_class.get) == "worst" or
+        
         max(anime_style_age_score, key=anime_style_age_score.get) in bad_anime_style_ages or
         monochrome_score > monochrome_threshold
     )
+
+
+
 def main():
     # 第一步：收集图片
-    with open(os.getcwd()+r"\web.txt", "r") as file:
-        urls = file.readlines()
-    gallery_dl_path = os.getcwd()+r"\gallery-dl\gallery-dl.exe"
+    with open(os.getcwd() + r"\web.txt", "r") as file:
+        content = file.read()
+        tasks = content.split("##SPILTED@")[1:] 
 
-    for url in urls:
-       url = url.strip()
-       print(url)
-       command_gall = gallery_dl_path+ f' "{url}"'
-       os.system(command_gall)
+    gallery_dl_path = os.getcwd() + r"\gallery-dl\gallery-dl.exe"
 
-    temp_folder = os.getcwd()+r"\temp"
-    os.makedirs(temp_folder, exist_ok=True)
+    task_file = os.getcwd() + r"\task.txt"
+    if os.path.exists(task_file):
+        with open(task_file, "r") as file:
+            task_lines = file.readlines()
+            if task_lines and "Finished_a2498eagp3q!" not in task_lines:
+                last_task = task_lines[-1].strip()
+                if last_task in [task.split("\n")[0].strip() for task in tasks]: 
+                    tasks = tasks[tasks.index(next(task for task in tasks if task.startswith(last_task))) + 1:]  
+                else:
+                    print("Error: Task not found in web.txt")
+                    return
 
-    for root, _, files in os.walk(os.getcwd()+r"\gallery-dl"):
-        for file in files:
-            if file.lower().endswith((".jpg", ".jpeg", ".png",'.webp')):
-                src_path = os.path.join(root, file)
-                file_name, file_ext = os.path.splitext(file)
-                dst_path = os.path.join(temp_folder, file_name + '_' + ''.join(random.choices(string.ascii_letters + string.digits, k=8)) + file_ext)
-                shutil.move(src_path, dst_path)
+    for task in tasks: 
+        lines = task.strip().split("\n")  
+        output_dir_name = lines[0].strip()  
+        urls = [url.strip() for url in lines[1:] if url.strip()] 
+        print(f"Processing task: {output_dir_name}")
 
-    extra_folder = os.getcwd()+r"\Extra"
-    if os.path.exists(extra_folder):
-        for root, _, files in os.walk(extra_folder):
+        for url in urls:
+            print(url)
+            command_gall = gallery_dl_path + f' "{url}"'
+            os.system(command_gall)
+
+        temp_folder = os.getcwd() + r"\temp"
+        os.makedirs(temp_folder, exist_ok=True)
+
+        for root, _, files in os.walk(os.getcwd() + r"\gallery-dl"):
             for file in files:
-                if file.lower().endswith((".jpg", ".jpeg", ".png",".webp")):
+                if file.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
                     src_path = os.path.join(root, file)
                     file_name, file_ext = os.path.splitext(file)
                     dst_path = os.path.join(temp_folder, file_name + '_' + ''.join(random.choices(string.ascii_letters + string.digits, k=8)) + file_ext)
                     shutil.move(src_path, dst_path)
-    similarity_threshold = 0.13
-    # 第二步：标记及处理图片
-    deduplicate_images(temp_folder,similarity_threshold)
-    image_scores = {}
-    print("Rating Image")
-    with ProcessPoolExecutor(max_workers=6) as executor:
-        results = executor.map(process_image_file, [os.path.join(temp_folder, image_name) for image_name in os.listdir(temp_folder)])
-        for image_path, scores in results:
-            image_scores[image_path] = scores
 
-    # 第三步：移动图片
-    output_folder = os.getcwd()+r"\output"
-    bad_image_folder = os.path.join(output_folder, os.getcwd()+ r"\output\BadImage")
-    os.makedirs(output_folder, exist_ok=True)
-    os.makedirs(bad_image_folder, exist_ok=True)
+        extra_folder = os.getcwd() + r"\Extra"
+        if os.path.exists(extra_folder):
+            for root, _, files in os.walk(extra_folder):
+                for file in files:
+                    if file.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
+                        src_path = os.path.join(root, file)
+                        file_name, file_ext = os.path.splitext(file)
+                        dst_path = os.path.join(temp_folder, file_name + '_' + ''.join(random.choices(string.ascii_letters + string.digits, k=8)) + file_ext)
+                        shutil.move(src_path, dst_path)
 
-    for image_path, scores in image_scores.items():
-        if is_bad_image(scores):
-            shutil.move(image_path, os.path.join(bad_image_folder, os.path.basename(image_path)))
-        else:
-            shutil.move(image_path, os.path.join(output_folder, os.path.basename(image_path)))
+        similarity_threshold = 0.20
+        # 第二步：标记及处理图片
+        deduplicate_images(temp_folder, similarity_threshold)
+        image_scores = {}
+        print("Rating Image")
+        with ProcessPoolExecutor(max_workers=2) as executor:
+            results = executor.map(process_image_file, [os.path.join(temp_folder, image_name) for image_name in os.listdir(temp_folder)])
+            for image_path, scores in results:
+                image_scores[image_path] = scores
+
+        # 第三步：移动图片
+        output_folder = os.getcwd() + f"\\{output_dir_name}"
+        bad_image_folder = os.path.join(output_folder, os.getcwd() + f"\\{output_dir_name}\\BadImage")
+        os.makedirs(output_folder, exist_ok=True)
+        os.makedirs(bad_image_folder, exist_ok=True)
+
+        for image_path, scores in image_scores.items():
+            if is_bad_image(scores):
+                shutil.move(image_path, os.path.join(bad_image_folder, os.path.basename(image_path)))
+            else:
+                shutil.move(image_path, os.path.join(output_folder, os.path.basename(image_path)))
+
+        with open(task_file, "a") as file:
+            file.write(output_dir_name + "\n")
+
+    with open(task_file, "a") as file:
+        file.write("Finished_a2498eagp3q!")
 
 if __name__ == "__main__":
     main()
@@ -264,4 +293,5 @@ if __name__ == "__main__":
                     shutil.rmtree(dir_path)
                     print(f"Deleted folder: {dir_path}")
                 except OSError as e:
-                    print(f"Error deleting folder: {dir_path}"+f"Error message: {e}")
+                    print(f"Error deleting folder: {dir_path}" + f"Error message: {e}")
+
