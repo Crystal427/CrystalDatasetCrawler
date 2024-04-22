@@ -5,7 +5,11 @@ Rating image use [imgutils](https://github.com/deepghs/imgutils) to Rate and cat
 
 # How to use?
 write a the links to **./web.txt**，then run the scripts.  
-
+parser info 
+--real_threshold  The threshold for detecting whether an image is a real picture, defaults to 0.9. 
+--aesthetic_threshold  The aesthetic score of the image, defaults to 0.35.
+--monochrome_threshold The threshold for detecting whether an image is monochrome, defaults to 0.9
+--similarity_threshold The threshold for performing Phash deduplication on images defaults to 0.2
 **Examples:**  
 ##SPILTED@taskname1  
 website1  
@@ -28,3 +32,4 @@ Crystal 2024
 
 
 # Change History
+

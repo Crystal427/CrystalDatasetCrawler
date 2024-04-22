@@ -3,7 +3,7 @@ import shutil
 import random
 import string
 import numpy as np
-
+import argparse
 import pandas as pd
 from PIL import Image, ImageFile
 from scipy.fftpack import dct
@@ -178,7 +178,7 @@ def process_image_file(image_path, model_name_classify='mobilenetv3_v1.3_dist', 
         "monochrome_score": monochrome_score
     }
 
-def is_bad_image(image_scores, real_threshold=0.9, aesthetic_threshold=0.35, monochrome_threshold=0.9):
+def is_bad_image(image_scores, real_threshold, aesthetic_threshold, monochrome_threshold):
     imgscore = image_scores["imgscore"]
     anime_real_score = image_scores["anime_real_score"]
     aesthetic_score = image_scores["aesthetic_score"]
@@ -197,10 +197,8 @@ def is_bad_image(image_scores, real_threshold=0.9, aesthetic_threshold=0.35, mon
         monochrome_score > monochrome_threshold
     )
 
-
-
-def main():
-    # 第一步：收集图片
+def main(args):
+    # 第一步:收集图片
     with open(os.getcwd() + r"\web.txt", "r") as file:
         content = file.read()
         tasks = content.split("##SPILTED@")[1:] 
@@ -251,9 +249,8 @@ def main():
                         dst_path = os.path.join(temp_folder, file_name + '_' + ''.join(random.choices(string.ascii_letters + string.digits, k=8)) + file_ext)
                         shutil.move(src_path, dst_path)
 
-        similarity_threshold = 0.20
-        # 第二步：标记及处理图片
-        deduplicate_images(temp_folder, similarity_threshold)
+        # 第二步:标记及处理图片
+        deduplicate_images(temp_folder, args.similarity_threshold)
         image_scores = {}
         print("Rating Image")
         with ProcessPoolExecutor(max_workers=2) as executor:
@@ -261,14 +258,14 @@ def main():
             for image_path, scores in results:
                 image_scores[image_path] = scores
 
-        # 第三步：移动图片
+        # 第三步:移动图片  
         output_folder = os.getcwd() + f"\\{output_dir_name}"
         bad_image_folder = os.path.join(output_folder, os.getcwd() + f"\\{output_dir_name}\\BadImage")
         os.makedirs(output_folder, exist_ok=True)
         os.makedirs(bad_image_folder, exist_ok=True)
 
         for image_path, scores in image_scores.items():
-            if is_bad_image(scores):
+            if is_bad_image(scores, args.real_threshold, args.aesthetic_threshold, args.monochrome_threshold):
                 shutil.move(image_path, os.path.join(bad_image_folder, os.path.basename(image_path)))
             else:
                 shutil.move(image_path, os.path.join(output_folder, os.path.basename(image_path)))
@@ -280,10 +277,16 @@ def main():
         file.write("Finished_a2498eagp3q!")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='Image processing script')
+    parser.add_argument('--real_threshold', type=float, default=0.9, help='Real threshold for anime_real_score')
+    parser.add_argument('--aesthetic_threshold', type=float, default=0.35, help='Aesthetic threshold for aesthetic_score')
+    parser.add_argument('--monochrome_threshold', type=float, default=0.9, help='Monochrome threshold for monochrome_score')
+    parser.add_argument('--similarity_threshold', type=float, default=0.2, help='Similarity threshold for image deduplication')
+    args = parser.parse_args()
+
+    main(args)
     print("Finished!")
 
-    # 删除 os.getcwd()+r"\gallery-dl\" 目录下的所有文件夹
     gallery_dl_folder = os.getcwd() + r"\gallery-dl"
     if os.path.exists(gallery_dl_folder):
         for root, dirs, _ in os.walk(gallery_dl_folder, topdown=False):
@@ -295,3 +298,10 @@ if __name__ == "__main__":
                 except OSError as e:
                     print(f"Error deleting folder: {dir_path}" + f"Error message: {e}")
 
+    task_file = os.path.join(os.getcwd(), "task.txt")
+    if os.path.exists(task_file):
+        try:
+            os.remove(task_file)
+            print(f"Deleted file: {task_file}")
+        except OSError as e:
+            print(f"Error deleting file: {task_file}" + f"Error message: {e}")
