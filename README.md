@@ -10,7 +10,8 @@ write a the links to **./web.txt**，then run the scripts.
 python main.py 
 ```   
 
-parser info 
+**Parser info** 
+
 --real_threshold  The threshold for detecting whether an image is a real picture, defaults to 0.9.   
 --aesthetic_threshold  The aesthetic score of the image, defaults to 0.35.  
 --monochrome_threshold The threshold for detecting whether an image is monochrome, defaults to 0.9  
