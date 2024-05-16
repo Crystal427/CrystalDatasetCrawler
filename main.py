@@ -225,7 +225,7 @@ def main(args):
 
         for url in urls:
             print(url)
-            command_gall = gallery_dl_path + f' "{url}"'
+            command_gall = gallery_dl_path + f' "{url}" --write-metadata'
             os.system(command_gall)
 
         temp_folder = os.getcwd() + r"\temp"
@@ -235,9 +235,13 @@ def main(args):
             for file in files:
                 if file.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
                     src_path = os.path.join(root, file)
+                    json_path = src_path + ".json"
                     file_name, file_ext = os.path.splitext(file)
                     dst_path = os.path.join(temp_folder, file_name + '_' + ''.join(random.choices(string.ascii_letters + string.digits, k=8)) + file_ext)
+                    dst_json_path = dst_path + ".json"
                     shutil.move(src_path, dst_path)
+                    if os.path.exists(json_path):
+                        shutil.move(json_path, dst_json_path)
 
         extra_folder = os.getcwd() + r"\Extra"
         if os.path.exists(extra_folder):
@@ -245,16 +249,20 @@ def main(args):
                 for file in files:
                     if file.lower().endswith((".jpg", ".jpeg", ".png", ".webp")):
                         src_path = os.path.join(root, file)
+                        json_path = src_path + ".json"
                         file_name, file_ext = os.path.splitext(file)
                         dst_path = os.path.join(temp_folder, file_name + '_' + ''.join(random.choices(string.ascii_letters + string.digits, k=8)) + file_ext)
+                        dst_json_path = dst_path + ".json"
                         shutil.move(src_path, dst_path)
+                        if os.path.exists(json_path):
+                            shutil.move(json_path, dst_json_path)
 
         # 第二步:标记及处理图片
         deduplicate_images(temp_folder, args.similarity_threshold)
         image_scores = {}
         print("Rating Image")
         with ProcessPoolExecutor(max_workers=2) as executor:
-            results = executor.map(process_image_file, [os.path.join(temp_folder, image_name) for image_name in os.listdir(temp_folder)])
+            results = executor.map(process_image_file, [os.path.join(temp_folder, image_name) for image_name in os.listdir(temp_folder) if not image_name.endswith(".json")])
             for image_path, scores in results:
                 image_scores[image_path] = scores
 
@@ -265,10 +273,18 @@ def main(args):
         os.makedirs(bad_image_folder, exist_ok=True)
 
         for image_path, scores in image_scores.items():
+            json_path = image_path + ".json"
             if is_bad_image(scores, args.real_threshold, args.aesthetic_threshold, args.monochrome_threshold):
                 shutil.move(image_path, os.path.join(bad_image_folder, os.path.basename(image_path)))
+                if os.path.exists(json_path):
+                    shutil.move(json_path, os.path.join(bad_image_folder, os.path.basename(json_path)))
             else:
                 shutil.move(image_path, os.path.join(output_folder, os.path.basename(image_path)))
+                if os.path.exists(json_path):
+                    shutil.move(json_path, os.path.join(output_folder, os.path.basename(json_path)))
+
+        with open(os.path.join(output_folder, "crawler.txt"), "w") as file:
+            file.write(task)
 
         with open(task_file, "a") as file:
             file.write(output_dir_name + "\n")
