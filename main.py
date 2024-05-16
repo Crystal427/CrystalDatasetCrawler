@@ -92,7 +92,7 @@ class PHash:
 
         encoding_map = {}
         for img_path in Path(image_dir).glob("*"):
-            if img_path.is_file():
+            if img_path.is_file() and img_path.suffix.lower() != ".json":
                 try:
                     hash_str = self.encode_image(str(img_path))
                     encoding_map[str(img_path)] = hash_str
