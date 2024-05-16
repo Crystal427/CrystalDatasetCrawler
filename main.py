@@ -289,8 +289,16 @@ def main(args):
         with open(task_file, "a") as file:
             file.write(output_dir_name + "\n")
 
+        # 清空temp文件夹
+        for file_name in os.listdir(temp_folder):
+            file_path = os.path.join(temp_folder, file_name)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+
     with open(task_file, "a") as file:
         file.write("Finished_a2498eagp3q!")
+    
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Image processing script')
