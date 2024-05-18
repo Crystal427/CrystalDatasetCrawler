@@ -1,0 +1,12 @@
+numpy
+pandas
+PIL
+scipy
+argparse
+huggingface_hub
+natsort
+pathlib
+functools
+dghs-imgutils[gpu]
+# if you do not have a NVIDA GPU, you can use the following instead
+#dghs-imgtuils 
