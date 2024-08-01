@@ -225,7 +225,10 @@ def main(args):
 
         for url in urls:
             print(url)
-            command_gall = gallery_dl_path + f' "{url}" --write-metadata'
+            if "x.com" in url:
+                command_gall = gallery_dl_path + f' "{url}" --write-metadata --range 1-50'
+            else:
+                command_gall = gallery_dl_path + f' "{url}" --write-metadata'
             os.system(command_gall)
 
         temp_folder = os.getcwd() + r"\temp"
