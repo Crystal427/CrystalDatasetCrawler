@@ -2,7 +2,8 @@ a general image Crawler to crawl some pictures (
 
 # Crystal Dataset Crawler
 
-This project is a Python script for crawling and processing images from the web. It uses various libraries such as `numpy`, `pandas`, `PIL`, `scipy`, `argparse`, `huggingface_hub`, `natsort`, `pathlib`, `functools`, and `dghs-imgutils`.
+This project is a Python script for crawling and processing images from the web.
+image rating is based on [DeepGHS/imgutils](https://github.com/deepghs/imgutils)
 
 ## Features
 
@@ -13,7 +14,7 @@ This project is a Python script for crawling and processing images from the web.
 
 ## Requirements
 
-The required Python libraries are listed in the [requirements.txt](/C:/Users/Crystal427/Downloads/CrystalDatasetCrawler/requirements.txt) file. You can install them using pip:
+The required Python libraries are listed in the requirements.txt file. You can install them using pip:
 
 ```sh
 pip install -r requirements.txt
@@ -61,4 +62,4 @@ Crystal 2024
 
 
 # Change History
-
+7/31 Twitter Crawler is limited to 250 pic per link
