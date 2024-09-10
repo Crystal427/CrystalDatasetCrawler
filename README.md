@@ -17,12 +17,14 @@ The required Python libraries are listed in the [requirements.txt](/C:/Users/Cry
 
 ```sh
 pip install -r requirements.txt
-
+```
 # Used library
 Crawler use [gallery-dl](https://github.com/mikf/gallery-dl) to crawl picture,etc.
 Rating image use [imgutils](https://github.com/deepghs/imgutils) to Rate and categories pictures.
 
 # How to use?
+Firstly,configure **gallery-dl.conf** at /gallery-dl/gallery-dl.conf to use gallery-dl
+
 write a the links to **./web.txt**，then run the scripts. 
 
 ```bash
